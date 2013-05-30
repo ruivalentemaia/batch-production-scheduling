@@ -1,26 +1,28 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
-import org.jgap.Chromosome;
 import org.jgap.Configuration;
 import org.jgap.FitnessFunction;
-import org.jgap.Gene;
 import org.jgap.InvalidConfigurationException;
 import org.jgap.impl.DefaultConfiguration;
-import org.jgap.impl.IntegerGene;
+
 
 
 public class BatchProductionScheduling {
 	
 	public static void main(String[] args) throws InvalidConfigurationException {
-		// TODO Auto-generated method stub
+		
+		int maximumPopulation = 300;
+		
 		Job job1 = new Job(1, 10, 5, 2);
 		Job job2 = new Job(2, 8, 6, 5);
 		Job job3 = new Job(3, 12, 7, 3);
 		Job job4 = new Job(4, 2, 7, 4);
 		Job job5 = new Job(5, 4, 8, 1);
-		Job[] jobs = {job1, job2, job3, job4, job5};
+		Job job6 = new Job(6, 3, 5, 1);
+		Job[] jobs = {job1, job2, job3, job4, job5, job6};
 		
 		Machine m1 = new Machine(1, 12);
 		Machine m2 = new Machine(2, 11);
@@ -28,7 +30,7 @@ public class BatchProductionScheduling {
 		Machine[] machines = {m1,m2,m3};
 		
 		//sets all jobs in different batches.
-		Batch[][] batches = new Batch[5][1];
+		Batch[][] batches = new Batch[jobs.length][1];
 		Job[] tempJobs = new Job[1];
 		for(int i = 0; i < jobs.length; i++) {
 			for(int j = 0; j < batches[i].length; j++) {
@@ -106,38 +108,73 @@ public class BatchProductionScheduling {
 		FitnessFunction f = new MinimizingMakespan(fit);
 		conf.setFitnessFunction(f);
 		
-		Gene[] genesFirstUpper = new Gene[firstChromossome.length];
-		Gene[] genesFirstDown = new Gene[firstChromossome.length];
-		Gene[] genesFirst = new Gene[firstChromossome.length*2];
-		inc = 0;
-		for(; inc < firstChromossome.length; inc++) 
-			genesFirstUpper[inc] = new IntegerGene(conf, 1, firstChromossome.length);
-		for(inc = 0; inc < genesFirstDown.length; inc++)
-			genesFirstDown[inc] = new IntegerGene(conf, 0, 1);
-		for(inc = 0; inc < (genesFirstUpper.length)/2; inc++) 
-			genesFirst[inc] = genesFirstUpper[inc];
-		for(inc = genesFirstDown.length/2; inc < genesFirstDown.length; inc++) 
-			genesFirst[inc] = genesFirstDown[inc];
+		Gen[] genesFirst = new Gen[firstChromossome.length];
+		for(inc = 0; inc < firstChromossome.length; inc++) {
+			Gen g = new Gen(firstChromossome[inc].getId(), firstChromossome[inc].getDecisionVariable());
+			genesFirst[inc] = g;
+		}
 		
-		Gene[] genesSecondUpper = new Gene[secondChromossome.length];
-		Gene[] genesSecondDown = new Gene[secondChromossome.length];
-		Gene[] genesSecond = new Gene[secondChromossome.length*2];
-		inc = 0;
-		for(; inc < secondChromossome.length; inc++)
-			genesSecondUpper[inc] = new IntegerGene(conf, 1, secondChromossome.length);
-		for(inc = 0; inc < genesSecondDown.length; inc++) 
-			genesSecondDown[inc] = new IntegerGene(conf,1, secondChromossome.length);
-		for(inc = 0; inc < (genesSecondUpper.length)/2; inc++) 
-			genesSecond[inc] = genesSecondUpper[inc];
-		for(inc = genesSecondDown.length/2; inc < genesSecondDown.length; inc++) 
-			genesSecond[inc] = genesSecondDown[inc];
+		Gen[] genesSecond = new Gen[secondChromossome.length];
+		for(inc = 0; inc < genesSecond.length; inc++) {
+			Gen g = new Gen(secondChromossome[inc].getId(), secondChromossome[inc].getDecisionVariable());
+			genesSecond[inc] = g;
+		}
 		
-		Chromosome chromosome1 = new Chromosome(conf, genesFirst);
-		Chromosome chromosome2 = new Chromosome(conf, genesSecond);
-		conf.setSampleChromosome(chromosome1);
-		conf.setSampleChromosome(chromosome2);
+		Chromossome c1 = new Chromossome(1, genesFirst);
+		Chromossome c2 = new Chromossome(2, genesSecond);
+		int id = 3;
 		
-		conf.setPopulationSize(300);
+		Chromossome[] operationalChromossome = new Chromossome[maximumPopulation];
+		operationalChromossome[0] = c1;
+		operationalChromossome[1] = c2;
+		int fpos = 2;
+		//randomly assigns the rest of the population
+		for(inc = 0; inc < maximumPopulation; inc++) {
+			Gen[] c1Genes = c1.getGenes();
+			Gen[] newGenes = new Gen[c1Genes.length];
+			List<Integer> indexes = new ArrayList<Integer>();
+			int decay = 0;
+			for(int a = 0; a < c1Genes.length; a++) {
+				Random r = new Random();
+				int pos=r.nextInt(c1Genes.length-1);
+				if(a == 0) {
+					newGenes[pos] = c1Genes[a];
+					indexes.add(pos);
+					System.out.println("Position " + pos + " added to indexes list.");
+					System.out.println("Value of a: " + a);
+				}
+				else {
+					for(int b = 0; b < indexes.size(); b++) {
+						if(indexes.size() == c1Genes.length) {
+							System.out.println("Should be done by now.");
+							decay = 0;
+							break;
+						}
+						if( pos == indexes.get(b)) {
+							decay = 1;
+							break;
+						}
+						decay = 0;
+					}
+					if(decay == 1) {
+						a--;
+						continue;
+					}
+					else {
+						newGenes[pos] = c1Genes[a];
+						indexes.add(pos);
+						System.out.println("Position " + pos + " added to indexes list.");
+						System.out.println("Value of a: " + a);
+						System.out.println("2");
+						decay = 0;
+					}
+				}
+			}
+			Chromossome c = new Chromossome(id, newGenes);
+			operationalChromossome[fpos] = c;
+			operationalChromossome[fpos].print();
+			fpos++;
+			id++;
+		}
 	}
-
 }
