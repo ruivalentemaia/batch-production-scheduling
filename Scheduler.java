@@ -84,27 +84,20 @@ public class Scheduler {
 	
 	public double objectiveFunction(double sc, double nc, int u, double beta, Job[] jobs, Batch[][] batches) {
 		double z = 0;
-		double sum = 0;
+		double sum = 1;
 		int xijk = 0;
-		Job[] jobsInBatch;
+		Job[] jobsInBatch = new Job[jobs.length];
 		Job[] allJobs = new Job[jobs.length];
-		z = (sc+nc)*u + beta;
+		System.out.println("Value of the first part: " + z);
 		int inc = 0;
-		for(int j = 0; j < batches.length; j++) {
-			for(int i = 0; i < jobs.length; i++) {
-				jobsInBatch = batches[j][0].getJobs();
-				allJobs[inc] = jobsInBatch[0];
-				for(int k = 0; k < jobsInBatch.length; k++) {
-					if(jobs[i].getId() == jobsInBatch[k].getId()) {
-						xijk = 1;
-					}
-					else xijk = 0;
-				}
-				sum += allJobs[inc].getDueDate()*xijk - allJobs[inc].getArrivalTime();
-			}
-			inc++;
+		System.out.println("Batches length: " + batches[inc].length);
+		System.out.println("Jobs length: " + jobs.length);
+		for(; inc < jobs.length; inc++) {
+			xijk = 1;
+			sum += jobs[inc].getDueDate()*xijk - jobs[inc].getArrivalTime();
 		}
-		z=z*sum;
+		System.out.println("Value of sum: " + sum);
+		z = (sc+nc)*u + beta * sum;
 		return z;
 	}
 }

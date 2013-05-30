@@ -6,10 +6,11 @@ public class Job {
 	int arrivalTime;
 	int decisionVariable;
 	
-	public Job(int iD, int dD, int v) {
+	public Job(int iD, int dD, int v, int aT) {
 		id = iD;
 		dueDate = dD;
 		volume = v;
+		arrivalTime = aT;
 	}
 	
 	public Job() {
